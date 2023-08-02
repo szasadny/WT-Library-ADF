@@ -1,0 +1,30 @@
+{
+	"name": "src_table_keyword",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "src_db",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Source db"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "keyword",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "keyword"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

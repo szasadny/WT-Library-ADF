@@ -1,0 +1,44 @@
+{
+	"name": "src_table_loan",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "src_db",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Source db"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "loan_date",
+				"type": "date"
+			},
+			{
+				"name": "return_date",
+				"type": "date"
+			},
+			{
+				"name": "copy_id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "employee_id",
+				"type": "bigint",
+				"precision": 19
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "loan"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

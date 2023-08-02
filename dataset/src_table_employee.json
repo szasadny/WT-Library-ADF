@@ -1,0 +1,50 @@
+{
+	"name": "src_table_employee",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "src_db",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Source db"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "active",
+				"type": "bit"
+			},
+			{
+				"name": "admin",
+				"type": "bit"
+			},
+			{
+				"name": "email",
+				"type": "nvarchar"
+			},
+			{
+				"name": "first_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "last_name",
+				"type": "nvarchar"
+			},
+			{
+				"name": "password",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "employee"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

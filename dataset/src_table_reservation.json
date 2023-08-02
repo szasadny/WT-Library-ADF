@@ -1,0 +1,44 @@
+{
+	"name": "src_table_reservation",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "src_db",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Source db"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "allowed",
+				"type": "bit"
+			},
+			{
+				"name": "reservation_date",
+				"type": "date"
+			},
+			{
+				"name": "book_id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "employee_id",
+				"type": "bigint",
+				"precision": 19
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "reservation"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

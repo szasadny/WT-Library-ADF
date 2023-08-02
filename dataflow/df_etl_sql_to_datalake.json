@@ -1,0 +1,232 @@
+{
+	"name": "df_etl_sql_to_datalake",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "src_table_book",
+						"type": "DatasetReference"
+					},
+					"name": "BookTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_keyword",
+						"type": "DatasetReference"
+					},
+					"name": "KeywordTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_employee",
+						"type": "DatasetReference"
+					},
+					"name": "CustomerTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_keyword_books",
+						"type": "DatasetReference"
+					},
+					"name": "BookKeywordsTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_copy",
+						"type": "DatasetReference"
+					},
+					"name": "CopiesTable"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "Book_DIM",
+						"type": "DatasetReference"
+					},
+					"name": "BookDIM"
+				},
+				{
+					"dataset": {
+						"referenceName": "Keyword_DIM",
+						"type": "DatasetReference"
+					},
+					"name": "KeywordDIM"
+				},
+				{
+					"dataset": {
+						"referenceName": "User_DIM",
+						"type": "DatasetReference"
+					},
+					"name": "UserDIM"
+				},
+				{
+					"dataset": {
+						"referenceName": "Book_Keyword_FACT",
+						"type": "DatasetReference"
+					},
+					"name": "BookKeywordFACT"
+				}
+			],
+			"transformations": [
+				{
+					"name": "TrimBook"
+				},
+				{
+					"name": "TrimKeyword"
+				},
+				{
+					"name": "TrimUser"
+				},
+				{
+					"name": "JoinBooksAndCopies"
+				},
+				{
+					"name": "JoinBookAndKeywords"
+				},
+				{
+					"name": "BooksAndKeywordsTrim"
+				},
+				{
+					"name": "addCombinedColumn"
+				},
+				{
+					"name": "aggregateCountToFilterDuplicates"
+				},
+				{
+					"name": "BookKeywordsDropDuplicates"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          id as long,",
+				"          active as boolean,",
+				"          available as boolean,",
+				"          isbn as string,",
+				"          photo as string,",
+				"          stock as integer,",
+				"          title as string,",
+				"          writer as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> BookTable",
+				"source(output(",
+				"          id as long,",
+				"          keyword as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> KeywordTable",
+				"source(output(",
+				"          id as long,",
+				"          active as boolean,",
+				"          admin as boolean,",
+				"          email as string,",
+				"          first_name as string,",
+				"          last_name as string,",
+				"          password as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CustomerTable",
+				"source(output(",
+				"          keywords_id as long,",
+				"          books_id as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> BookKeywordsTable",
+				"source(output(",
+				"          id as long,",
+				"          active as boolean,",
+				"          book_id as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> CopiesTable",
+				"BookTable select(mapColumn(",
+				"          id,",
+				"          writer",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> TrimBook",
+				"KeywordTable select(mapColumn(",
+				"          id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> TrimKeyword",
+				"CustomerTable select(mapColumn(",
+				"          id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> TrimUser",
+				"BookTable, CopiesTable join(BookTable@id == book_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinBooksAndCopies",
+				"JoinBooksAndCopies, BookKeywordsTable join(CopiesTable@id == books_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinBookAndKeywords",
+				"JoinBookAndKeywords select(mapColumn(",
+				"          book_id,",
+				"          keywords_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BooksAndKeywordsTrim",
+				"BooksAndKeywordsTrim derive(book_keywords_id = concatWS('-', toString(book_id), toString(keywords_id))) ~> addCombinedColumn",
+				"addCombinedColumn aggregate(groupBy(book_id,",
+				"          keywords_id),",
+				"     countCombined = count(book_keywords_id)) ~> aggregateCountToFilterDuplicates",
+				"aggregateCountToFilterDuplicates select(mapColumn(",
+				"          book_id,",
+				"          keywords_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BookKeywordsDropDuplicates",
+				"TrimBook sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BookDIM",
+				"TrimKeyword sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> KeywordDIM",
+				"TrimUser sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> UserDIM",
+				"BookKeywordsDropDuplicates sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> BookKeywordFACT"
+			]
+		}
+	}
+}

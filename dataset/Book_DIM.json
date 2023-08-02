@@ -1,0 +1,24 @@
+{
+	"name": "Book_DIM",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DatalakeStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Sink Data lake"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "book_dim",
+				"fileSystem": "recommender"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

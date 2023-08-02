@@ -1,0 +1,55 @@
+{
+	"name": "src_table_book",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "src_db",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Source db"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [
+			{
+				"name": "id",
+				"type": "bigint",
+				"precision": 19
+			},
+			{
+				"name": "active",
+				"type": "bit"
+			},
+			{
+				"name": "available",
+				"type": "bit"
+			},
+			{
+				"name": "isbn",
+				"type": "nvarchar"
+			},
+			{
+				"name": "photo",
+				"type": "nvarchar"
+			},
+			{
+				"name": "stock",
+				"type": "int",
+				"precision": 10
+			},
+			{
+				"name": "title",
+				"type": "nvarchar"
+			},
+			{
+				"name": "writer",
+				"type": "nvarchar"
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "book"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

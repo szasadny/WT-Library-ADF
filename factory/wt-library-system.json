@@ -1,0 +1,9 @@
+{
+	"name": "wt-library-system",
+	"location": "westeurope",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "e6f208ab-d93a-488f-9175-b3aa8c036362",
+		"tenantId": "27835f45-bad0-4be0-a224-c2e605bfb3c1"
+	}
+}

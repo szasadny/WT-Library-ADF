@@ -1,0 +1,135 @@
+{
+	"name": "df_import_books_and_keywords",
+	"properties": {
+		"folder": {
+			"name": "Import to db"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "books_import",
+						"type": "DatasetReference"
+					},
+					"name": "books"
+				},
+				{
+					"dataset": {
+						"referenceName": "books_keyword",
+						"type": "DatasetReference"
+					},
+					"name": "keywords"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "src_table_book",
+						"type": "DatasetReference"
+					},
+					"name": "booksSink"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_keyword",
+						"type": "DatasetReference"
+					},
+					"name": "sink1"
+				}
+			],
+			"transformations": [
+				{
+					"name": "addDetails"
+				},
+				{
+					"name": "selectKeywordsOnly"
+				},
+				{
+					"name": "aggregate1"
+				},
+				{
+					"name": "filterOutCount"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          isbn as string,",
+				"          title as string,",
+				"          writer as string,",
+				"          publisher as string,",
+				"          avg_score as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> books",
+				"source(output(",
+				"          isbn as string,",
+				"          keyword as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> keywords",
+				"books derive(stock = 0,",
+				"          active = 1 == 1,",
+				"          available = 1 == 1,",
+				"          photo = 'temp.jpg') ~> addDetails",
+				"keywords select(mapColumn(",
+				"          keyword",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectKeywordsOnly",
+				"selectKeywordsOnly aggregate(groupBy(keyword),",
+				"     count = count('1')) ~> aggregate1",
+				"aggregate1 select(mapColumn(",
+				"          keyword",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> filterOutCount",
+				"addDetails sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          id as long,",
+				"          active as boolean,",
+				"          available as boolean,",
+				"          isbn as string,",
+				"          photo as string,",
+				"          stock as integer,",
+				"          title as string,",
+				"          writer as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          active,",
+				"          available,",
+				"          isbn,",
+				"          photo,",
+				"          stock,",
+				"          title,",
+				"          writer",
+				"     )) ~> booksSink",
+				"filterOutCount sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          id as long,",
+				"          keyword as string",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+			]
+		}
+	}
+}

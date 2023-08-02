@@ -1,0 +1,139 @@
+{
+	"name": "df_join_keywords_to_books",
+	"properties": {
+		"folder": {
+			"name": "Import to db"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "books_keyword",
+						"type": "DatasetReference"
+					},
+					"name": "BookKeywordsFile"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_book",
+						"type": "DatasetReference"
+					},
+					"name": "BooksTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_keyword",
+						"type": "DatasetReference"
+					},
+					"name": "KeywordsTable"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "src_table_keyword_books",
+						"type": "DatasetReference"
+					},
+					"name": "keywordBookTable"
+				}
+			],
+			"transformations": [
+				{
+					"name": "joinIsbn"
+				},
+				{
+					"name": "joinKeyword"
+				},
+				{
+					"name": "SelectRelevantDataBook"
+				},
+				{
+					"name": "selectRelevantDataKeyword"
+				},
+				{
+					"name": "join1"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          isbn as string,",
+				"          keyword as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> BookKeywordsFile",
+				"source(output(",
+				"          id as long,",
+				"          active as boolean,",
+				"          available as boolean,",
+				"          isbn as string,",
+				"          photo as string,",
+				"          stock as integer,",
+				"          title as string,",
+				"          writer as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> BooksTable",
+				"source(output(",
+				"          id as long,",
+				"          keyword as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> KeywordsTable",
+				"BooksTable, BookKeywordsFile join(BooksTable@isbn == BookKeywordsFile@isbn,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinIsbn",
+				"KeywordsTable, BookKeywordsFile join(KeywordsTable@keyword == BookKeywordsFile@keyword,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinKeyword",
+				"joinIsbn select(mapColumn(",
+				"          book_id = id,",
+				"          isbn = BooksTable@isbn,",
+				"          keyword",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> SelectRelevantDataBook",
+				"joinKeyword select(mapColumn(",
+				"          keyword_id = id,",
+				"          keyword = KeywordsTable@keyword,",
+				"          isbn",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectRelevantDataKeyword",
+				"SelectRelevantDataBook, selectRelevantDataKeyword join(SelectRelevantDataBook@isbn == selectRelevantDataKeyword@isbn",
+				"     && SelectRelevantDataBook@keyword == selectRelevantDataKeyword@keyword,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join1",
+				"join1 sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          keywords_id as long,",
+				"          books_id as long",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          keywords_id = keyword_id,",
+				"          books_id = book_id",
+				"     )) ~> keywordBookTable"
+			]
+		}
+	}
+}

@@ -1,0 +1,24 @@
+{
+	"name": "Review_FACT",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "DatalakeStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Sink Data lake"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "review_fact",
+				"fileSystem": "recommender"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
