@@ -3,7 +3,7 @@
 	"properties": {
 		"activities": [
 			{
-				"name": "Data flow1",
+				"name": "Import Keywords and Books",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "df_import_books_and_keywords",
+						"referenceName": "df_import_keywords_and_books",
 						"type": "DataFlowReference"
 					},
 					"compute": {

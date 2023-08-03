@@ -38,6 +38,20 @@
 						"type": "DatasetReference"
 					},
 					"name": "CopiesTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_loan",
+						"type": "DatasetReference"
+					},
+					"name": "LoanTable"
+				},
+				{
+					"dataset": {
+						"referenceName": "src_table_review",
+						"type": "DatasetReference"
+					},
+					"name": "ReviewTable"
 				}
 			],
 			"sinks": [
@@ -68,6 +82,20 @@
 						"type": "DatasetReference"
 					},
 					"name": "BookKeywordFACT"
+				},
+				{
+					"dataset": {
+						"referenceName": "Loan_FACT",
+						"type": "DatasetReference"
+					},
+					"name": "LoanFACT"
+				},
+				{
+					"dataset": {
+						"referenceName": "Review_FACT",
+						"type": "DatasetReference"
+					},
+					"name": "ReviewFACT"
 				}
 			],
 			"transformations": [
@@ -90,13 +118,19 @@
 					"name": "BooksAndKeywordsTrim"
 				},
 				{
-					"name": "addCombinedColumn"
+					"name": "addCombinedColumnBookKeyword"
 				},
 				{
 					"name": "aggregateCountToFilterDuplicates"
 				},
 				{
 					"name": "BookKeywordsDropDuplicates"
+				},
+				{
+					"name": "JoinBooksAndLoans"
+				},
+				{
+					"name": "LoansTrim"
 				}
 			],
 			"scriptLines": [
@@ -152,6 +186,27 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> CopiesTable",
+				"source(output(",
+				"          id as long,",
+				"          loan_date as date,",
+				"          return_date as date,",
+				"          copy_id as long,",
+				"          employee_id as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> LoanTable",
+				"source(output(",
+				"          id as long,",
+				"          rating as integer,",
+				"          book_id as long,",
+				"          employee_id as long",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> ReviewTable",
 				"BookTable select(mapColumn(",
 				"          id,",
 				"          writer",
@@ -184,8 +239,8 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> BooksAndKeywordsTrim",
-				"BooksAndKeywordsTrim derive(book_keywords_id = concatWS('-', toString(book_id), toString(keywords_id))) ~> addCombinedColumn",
-				"addCombinedColumn aggregate(groupBy(book_id,",
+				"BooksAndKeywordsTrim derive(book_keywords_id = concatWS('-', toString(book_id), toString(keywords_id))) ~> addCombinedColumnBookKeyword",
+				"addCombinedColumnBookKeyword aggregate(groupBy(book_id,",
 				"          keywords_id),",
 				"     countCombined = count(book_keywords_id)) ~> aggregateCountToFilterDuplicates",
 				"aggregateCountToFilterDuplicates select(mapColumn(",
@@ -194,6 +249,20 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> BookKeywordsDropDuplicates",
+				"JoinBooksAndCopies, LoanTable join(CopiesTable@id == copy_id,",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinBooksAndLoans",
+				"JoinBooksAndLoans select(mapColumn(",
+				"          loan_id = LoanTable@id,",
+				"          loan_date,",
+				"          return_date,",
+				"          book_id,",
+				"          employee_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> LoansTrim",
 				"TrimBook sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
@@ -225,7 +294,23 @@
 				"     preCommands: [],",
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> BookKeywordFACT"
+				"     skipDuplicateMapOutputs: true) ~> BookKeywordFACT",
+				"LoansTrim sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> LoanFACT",
+				"ReviewTable sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> ReviewFACT"
 			]
 		}
 	}

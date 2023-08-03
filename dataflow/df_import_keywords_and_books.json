@@ -1,5 +1,5 @@
 {
-	"name": "df_import_books_and_keywords",
+	"name": "df_import_keywords_and_books",
 	"properties": {
 		"folder": {
 			"name": "Import to db"
@@ -35,7 +35,7 @@
 						"referenceName": "src_table_keyword",
 						"type": "DatasetReference"
 					},
-					"name": "sink1"
+					"name": "keywordSink"
 				}
 			],
 			"transformations": [
@@ -46,7 +46,7 @@
 					"name": "selectKeywordsOnly"
 				},
 				{
-					"name": "aggregate1"
+					"name": "aggregateToGroupDuplicates"
 				},
 				{
 					"name": "filterOutCount"
@@ -80,8 +80,8 @@
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> selectKeywordsOnly",
 				"selectKeywordsOnly aggregate(groupBy(keyword),",
-				"     count = count('1')) ~> aggregate1",
-				"aggregate1 select(mapColumn(",
+				"     count = count('1')) ~> aggregateToGroupDuplicates",
+				"aggregateToGroupDuplicates select(mapColumn(",
 				"          keyword",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
@@ -128,7 +128,7 @@
 				"     format: 'table',",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true,",
-				"     errorHandlingOption: 'stopOnFirstError') ~> sink1"
+				"     errorHandlingOption: 'stopOnFirstError') ~> keywordSink"
 			]
 		}
 	}

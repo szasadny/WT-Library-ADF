@@ -1,9 +1,9 @@
 {
-	"name": "pl_generate_book_keyword_join_table",
+	"name": "pl_etl_sql_to_datalake",
 	"properties": {
 		"activities": [
 			{
-				"name": "Join Keywords And Books",
+				"name": "Transform SQL Data Into Recommender Datalake",
 				"type": "ExecuteDataFlow",
 				"dependsOn": [],
 				"policy": {
@@ -16,7 +16,7 @@
 				"userProperties": [],
 				"typeProperties": {
 					"dataflow": {
-						"referenceName": "df_join_keywords_to_books",
+						"referenceName": "df_etl_sql_to_datalake",
 						"type": "DataFlowReference"
 					},
 					"compute": {
@@ -27,11 +27,6 @@
 				}
 			}
 		],
-		"folder": {
-			"name": "Import to db"
-		},
-		"annotations": [],
-		"lastPublishTime": "2023-07-25T07:02:59Z"
-	},
-	"type": "Microsoft.DataFactory/factories/pipelines"
+		"annotations": []
+	}
 }
