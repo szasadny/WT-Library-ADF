@@ -130,7 +130,7 @@
 					"name": "joinBooksAndLoans"
 				},
 				{
-					"name": "trimLoans"
+					"name": "trimLoans2"
 				},
 				{
 					"name": "surrogateKeyBook"
@@ -152,6 +152,9 @@
 				},
 				{
 					"name": "surrogateKeyReview"
+				},
+				{
+					"name": "trimLoans"
 				}
 			],
 			"scriptLines": [
@@ -279,22 +282,21 @@
 				"     broadcast: 'auto')~> joinBooksAndLoans",
 				"joinLoansOnUserKey select(mapColumn(",
 				"          loan_key,",
-				"          loan_id = LoanTable@id,",
+				"          loan_id = id,",
 				"          loan_date,",
 				"          return_date,",
-				"          copy_id,",
-				"          user_key,",
-				"          book_key",
+				"          book_key,",
+				"          user_key",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> trimLoans",
+				"     skipDuplicateMapOutputs: true) ~> trimLoans2",
 				"BookTable keyGenerate(output(book_key as long),",
 				"     startAt: 1L,",
 				"     stepValue: 1L) ~> surrogateKeyBook",
-				"joinBooksAndLoans keyGenerate(output(loan_key as long),",
+				"trimLoans keyGenerate(output(loan_key as long),",
 				"     startAt: 1L,",
 				"     stepValue: 1L) ~> surrogateKeyLoan",
-				"surrogateKeyLoan, trimUser join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"surrogateKeyLoan, trimUser join(employee_id == user_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
@@ -305,7 +307,7 @@
 				"KeywordTable keyGenerate(output(keyword_key as long),",
 				"     startAt: 1L,",
 				"     stepValue: 1L) ~> surrogateKeyKeyword",
-				"JoinBookAndBooksKeywords, trimKeyword join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"JoinBookAndBooksKeywords, trimKeyword join(keywords_id == keyword_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
@@ -313,6 +315,15 @@
 				"ReviewTable keyGenerate(output(review_key as long),",
 				"     startAt: 1L,",
 				"     stepValue: 1L) ~> surrogateKeyReview",
+				"joinBooksAndLoans select(mapColumn(",
+				"          id = LoanTable@id,",
+				"          loan_date,",
+				"          return_date,",
+				"          book_key,",
+				"          employee_id",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> trimLoans",
 				"trimBook sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
@@ -345,7 +356,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> BookKeywordFACT",
-				"trimLoans sink(allowSchemaDrift: true,",
+				"trimLoans2 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
