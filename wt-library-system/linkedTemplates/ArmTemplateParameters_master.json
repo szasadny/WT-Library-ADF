@@ -1,0 +1,24 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "wt-library-system"
+		},
+		"DatalakeStorage_accountKey": {
+			"value": ""
+		},
+		"src_db_connectionString": {
+			"value": ""
+		},
+		"DatalakeStorage_properties_typeProperties_url": {
+			"value": "https://wtrecommenderstorage.dfs.core.windows.net/"
+		},
+		"containerUri": {
+			"value": ""
+		},
+		"containerSasToken": {
+			"value": ""
+		}
+	}
+}

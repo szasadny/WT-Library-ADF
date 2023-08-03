@@ -1,0 +1,745 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "wt-library-system"
+		},
+		"DatalakeStorage_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'DatalakeStorage'"
+		},
+		"src_db_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'src_db'"
+		},
+		"DatalakeStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://wtrecommenderstorage.dfs.core.windows.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/DatalakeStorage')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('DatalakeStorage_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('DatalakeStorage_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_db')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"connectionString": "[parameters('src_db_connectionString')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Book_DIM')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Sink Data lake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "book_dim",
+						"fileSystem": "recommender"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Book_Keyword_FACT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Sink Data lake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "book_keyword_fact",
+						"fileSystem": "recommender"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Keyword_DIM')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Sink Data lake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "keyword_dim",
+						"fileSystem": "recommender"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Loan_FACT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Sink Data lake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "loan_fact",
+						"fileSystem": "recommender"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Review_FACT')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Sink Data lake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "review_fact",
+						"fileSystem": "recommender"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/User_DIM')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Sink Data lake"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "user_dim",
+						"fileSystem": "recommender"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/books_import')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "import from files"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "books_import.csv",
+						"fileSystem": "import"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "isbn",
+						"type": "String"
+					},
+					{
+						"name": "title",
+						"type": "String"
+					},
+					{
+						"name": "writer",
+						"type": "String"
+					},
+					{
+						"name": "publisher",
+						"type": "String"
+					},
+					{
+						"name": "avg_score",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/books_keyword')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "books_keyword.csv",
+						"fileSystem": "import"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "isbn",
+						"type": "String"
+					},
+					{
+						"name": "keyword",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/keywordSink')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "books_keyword.csv",
+						"fileSystem": "import"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/keywords_import')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "DatalakeStorage",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "import from files"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "books_keywords.csv",
+						"fileSystem": "import"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "isbn",
+						"type": "String"
+					},
+					{
+						"name": "keywords",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/DatalakeStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_book')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "active",
+						"type": "bit"
+					},
+					{
+						"name": "available",
+						"type": "bit"
+					},
+					{
+						"name": "isbn",
+						"type": "nvarchar"
+					},
+					{
+						"name": "photo",
+						"type": "nvarchar"
+					},
+					{
+						"name": "stock",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "title",
+						"type": "nvarchar"
+					},
+					{
+						"name": "writer",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "book"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_copy')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "active",
+						"type": "bit"
+					},
+					{
+						"name": "book_id",
+						"type": "bigint",
+						"precision": 19
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "copy"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_employee')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "active",
+						"type": "bit"
+					},
+					{
+						"name": "admin",
+						"type": "bit"
+					},
+					{
+						"name": "email",
+						"type": "nvarchar"
+					},
+					{
+						"name": "first_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "last_name",
+						"type": "nvarchar"
+					},
+					{
+						"name": "password",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "employee"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_keyword')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "keyword",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "keyword"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_keyword_books')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "keywords_id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "books_id",
+						"type": "bigint",
+						"precision": 19
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "keyword_books"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_loan')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "loan_date",
+						"type": "date"
+					},
+					{
+						"name": "return_date",
+						"type": "date"
+					},
+					{
+						"name": "copy_id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "employee_id",
+						"type": "bigint",
+						"precision": 19
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "loan"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_reservation')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "allowed",
+						"type": "bit"
+					},
+					{
+						"name": "reservation_date",
+						"type": "date"
+					},
+					{
+						"name": "book_id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "employee_id",
+						"type": "bigint",
+						"precision": 19
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "reservation"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/src_table_review')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "src_db",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Source db"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "rating",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "book_id",
+						"type": "bigint",
+						"precision": 19
+					},
+					{
+						"name": "employee_id",
+						"type": "bigint",
+						"precision": 19
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "review"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/src_db')]"
+			]
+		}
+	]
+}

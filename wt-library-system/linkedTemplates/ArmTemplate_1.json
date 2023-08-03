@@ -1,0 +1,780 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "wt-library-system"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/df_etl_sql_to_datalake')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "src_table_book",
+								"type": "DatasetReference"
+							},
+							"name": "BookTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_keyword",
+								"type": "DatasetReference"
+							},
+							"name": "KeywordTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_employee",
+								"type": "DatasetReference"
+							},
+							"name": "CustomerTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_keyword_books",
+								"type": "DatasetReference"
+							},
+							"name": "BookKeywordsTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_copy",
+								"type": "DatasetReference"
+							},
+							"name": "CopiesTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_loan",
+								"type": "DatasetReference"
+							},
+							"name": "LoanTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_review",
+								"type": "DatasetReference"
+							},
+							"name": "ReviewTable"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "Book_DIM",
+								"type": "DatasetReference"
+							},
+							"name": "BookDIM"
+						},
+						{
+							"dataset": {
+								"referenceName": "Keyword_DIM",
+								"type": "DatasetReference"
+							},
+							"name": "KeywordDIM"
+						},
+						{
+							"dataset": {
+								"referenceName": "User_DIM",
+								"type": "DatasetReference"
+							},
+							"name": "UserDIM"
+						},
+						{
+							"dataset": {
+								"referenceName": "Book_Keyword_FACT",
+								"type": "DatasetReference"
+							},
+							"name": "BookKeywordFACT"
+						},
+						{
+							"dataset": {
+								"referenceName": "Loan_FACT",
+								"type": "DatasetReference"
+							},
+							"name": "LoanFACT"
+						},
+						{
+							"dataset": {
+								"referenceName": "Review_FACT",
+								"type": "DatasetReference"
+							},
+							"name": "ReviewFACT"
+						}
+					],
+					"transformations": [
+						{
+							"name": "TrimBook"
+						},
+						{
+							"name": "TrimKeyword"
+						},
+						{
+							"name": "TrimUser"
+						},
+						{
+							"name": "JoinBooksAndCopies"
+						},
+						{
+							"name": "JoinBookAndKeywords"
+						},
+						{
+							"name": "BooksAndKeywordsTrim"
+						},
+						{
+							"name": "addCombinedColumnBookKeyword"
+						},
+						{
+							"name": "aggregateCountToFilterDuplicates"
+						},
+						{
+							"name": "BookKeywordsDropDuplicates"
+						},
+						{
+							"name": "JoinBooksAndLoans"
+						},
+						{
+							"name": "LoansTrim"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          id as long,",
+						"          active as boolean,",
+						"          available as boolean,",
+						"          isbn as string,",
+						"          photo as string,",
+						"          stock as integer,",
+						"          title as string,",
+						"          writer as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> BookTable",
+						"source(output(",
+						"          id as long,",
+						"          keyword as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> KeywordTable",
+						"source(output(",
+						"          id as long,",
+						"          active as boolean,",
+						"          admin as boolean,",
+						"          email as string,",
+						"          first_name as string,",
+						"          last_name as string,",
+						"          password as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CustomerTable",
+						"source(output(",
+						"          keywords_id as long,",
+						"          books_id as long",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> BookKeywordsTable",
+						"source(output(",
+						"          id as long,",
+						"          active as boolean,",
+						"          book_id as long",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> CopiesTable",
+						"source(output(",
+						"          id as long,",
+						"          loan_date as date,",
+						"          return_date as date,",
+						"          copy_id as long,",
+						"          employee_id as long",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> LoanTable",
+						"source(output(",
+						"          id as long,",
+						"          rating as integer,",
+						"          book_id as long,",
+						"          employee_id as long",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> ReviewTable",
+						"BookTable select(mapColumn(",
+						"          id,",
+						"          writer",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> TrimBook",
+						"KeywordTable select(mapColumn(",
+						"          id",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> TrimKeyword",
+						"CustomerTable select(mapColumn(",
+						"          id",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> TrimUser",
+						"BookTable, CopiesTable join(BookTable@id == book_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinBooksAndCopies",
+						"JoinBooksAndCopies, BookKeywordsTable join(CopiesTable@id == books_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinBookAndKeywords",
+						"JoinBookAndKeywords select(mapColumn(",
+						"          book_id,",
+						"          keywords_id",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BooksAndKeywordsTrim",
+						"BooksAndKeywordsTrim derive(book_keywords_id = concatWS('-', toString(book_id), toString(keywords_id))) ~> addCombinedColumnBookKeyword",
+						"addCombinedColumnBookKeyword aggregate(groupBy(book_id,",
+						"          keywords_id),",
+						"     countCombined = count(book_keywords_id)) ~> aggregateCountToFilterDuplicates",
+						"aggregateCountToFilterDuplicates select(mapColumn(",
+						"          book_id,",
+						"          keywords_id",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BookKeywordsDropDuplicates",
+						"JoinBooksAndCopies, LoanTable join(CopiesTable@id == copy_id,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> JoinBooksAndLoans",
+						"JoinBooksAndLoans select(mapColumn(",
+						"          loan_id = LoanTable@id,",
+						"          loan_date,",
+						"          return_date,",
+						"          book_id,",
+						"          employee_id",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> LoansTrim",
+						"TrimBook sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BookDIM",
+						"TrimKeyword sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> KeywordDIM",
+						"TrimUser sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> UserDIM",
+						"BookKeywordsDropDuplicates sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> BookKeywordFACT",
+						"LoansTrim sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> LoanFACT",
+						"ReviewTable sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> ReviewFACT"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_import_keywords_and_books')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "Import to db"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "books_import",
+								"type": "DatasetReference"
+							},
+							"name": "books"
+						},
+						{
+							"dataset": {
+								"referenceName": "books_keyword",
+								"type": "DatasetReference"
+							},
+							"name": "keywords"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "src_table_book",
+								"type": "DatasetReference"
+							},
+							"name": "booksSink"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_keyword",
+								"type": "DatasetReference"
+							},
+							"name": "keywordSink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "addDetails"
+						},
+						{
+							"name": "selectKeywordsOnly"
+						},
+						{
+							"name": "aggregateToGroupDuplicates"
+						},
+						{
+							"name": "filterOutCount"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          isbn as string,",
+						"          title as string,",
+						"          writer as string,",
+						"          publisher as string,",
+						"          avg_score as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> books",
+						"source(output(",
+						"          isbn as string,",
+						"          keyword as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> keywords",
+						"books derive(stock = 0,",
+						"          active = 1 == 1,",
+						"          available = 1 == 1,",
+						"          photo = 'temp.jpg') ~> addDetails",
+						"keywords select(mapColumn(",
+						"          keyword",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectKeywordsOnly",
+						"selectKeywordsOnly aggregate(groupBy(keyword),",
+						"     count = count('1')) ~> aggregateToGroupDuplicates",
+						"aggregateToGroupDuplicates select(mapColumn(",
+						"          keyword",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> filterOutCount",
+						"addDetails sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as long,",
+						"          active as boolean,",
+						"          available as boolean,",
+						"          isbn as string,",
+						"          photo as string,",
+						"          stock as integer,",
+						"          title as string,",
+						"          writer as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          active,",
+						"          available,",
+						"          isbn,",
+						"          photo,",
+						"          stock,",
+						"          title,",
+						"          writer",
+						"     )) ~> booksSink",
+						"filterOutCount sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          id as long,",
+						"          keyword as string",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError') ~> keywordSink"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_join_keywords_to_books')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"folder": {
+					"name": "Import to db"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "books_keyword",
+								"type": "DatasetReference"
+							},
+							"name": "BookKeywordsFile"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_book",
+								"type": "DatasetReference"
+							},
+							"name": "BooksTable"
+						},
+						{
+							"dataset": {
+								"referenceName": "src_table_keyword",
+								"type": "DatasetReference"
+							},
+							"name": "KeywordsTable"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "src_table_keyword_books",
+								"type": "DatasetReference"
+							},
+							"name": "keywordBookTable"
+						}
+					],
+					"transformations": [
+						{
+							"name": "joinIsbn"
+						},
+						{
+							"name": "joinKeyword"
+						},
+						{
+							"name": "SelectRelevantDataBook"
+						},
+						{
+							"name": "selectRelevantDataKeyword"
+						},
+						{
+							"name": "join1"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          isbn as string,",
+						"          keyword as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> BookKeywordsFile",
+						"source(output(",
+						"          id as long,",
+						"          active as boolean,",
+						"          available as boolean,",
+						"          isbn as string,",
+						"          photo as string,",
+						"          stock as integer,",
+						"          title as string,",
+						"          writer as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> BooksTable",
+						"source(output(",
+						"          id as long,",
+						"          keyword as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> KeywordsTable",
+						"BooksTable, BookKeywordsFile join(BooksTable@isbn == BookKeywordsFile@isbn,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinIsbn",
+						"KeywordsTable, BookKeywordsFile join(KeywordsTable@keyword == BookKeywordsFile@keyword,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinKeyword",
+						"joinIsbn select(mapColumn(",
+						"          book_id = id,",
+						"          isbn = BooksTable@isbn,",
+						"          keyword",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> SelectRelevantDataBook",
+						"joinKeyword select(mapColumn(",
+						"          keyword_id = id,",
+						"          keyword = KeywordsTable@keyword,",
+						"          isbn",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> selectRelevantDataKeyword",
+						"SelectRelevantDataBook, selectRelevantDataKeyword join(SelectRelevantDataBook@isbn == selectRelevantDataKeyword@isbn",
+						"     && SelectRelevantDataBook@keyword == selectRelevantDataKeyword@keyword,",
+						"     joinType:'inner',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> join1",
+						"join1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     input(",
+						"          keywords_id as long,",
+						"          books_id as long",
+						"     ),",
+						"     deletable:false,",
+						"     insertable:true,",
+						"     updateable:false,",
+						"     upsertable:false,",
+						"     format: 'table',",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     errorHandlingOption: 'stopOnFirstError',",
+						"     mapColumn(",
+						"          keywords_id = keyword_id,",
+						"          books_id = book_id",
+						"     )) ~> keywordBookTable"
+					]
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_generate_book_keyword_join_table')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Join Keywords And Books",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_join_keywords_to_books",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"BookKeywordsFile": {},
+									"BooksTable": {},
+									"KeywordsTable": {},
+									"keywordBookTable": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "Import to db"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-25T07:02:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_join_keywords_to_books')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_import_books_and_keywords')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Import Keywords and Books",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_import_keywords_and_books",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"books": {},
+									"keywords": {},
+									"booksSink": {},
+									"keywordSink": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"folder": {
+					"name": "Import to db"
+				},
+				"annotations": [],
+				"lastPublishTime": "2023-07-25T07:02:59Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_import_keywords_and_books')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_etl_sql_to_datalake')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Transform SQL Data Into Recommender Datalake",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_etl_sql_to_datalake",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"BookTable": {},
+									"KeywordTable": {},
+									"CustomerTable": {},
+									"BookKeywordsTable": {},
+									"CopiesTable": {},
+									"LoanTable": {},
+									"ReviewTable": {},
+									"BookDIM": {},
+									"KeywordDIM": {},
+									"UserDIM": {},
+									"BookKeywordFACT": {},
+									"LoanFACT": {},
+									"ReviewFACT": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {},
+					"cancelAfter": {}
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_etl_sql_to_datalake')]"
+			]
+		}
+	]
+}
