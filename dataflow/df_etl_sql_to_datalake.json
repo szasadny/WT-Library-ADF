@@ -100,22 +100,22 @@
 			],
 			"transformations": [
 				{
-					"name": "TrimBook"
+					"name": "trimBook"
 				},
 				{
-					"name": "TrimKeyword"
+					"name": "trimKeyword"
 				},
 				{
-					"name": "TrimUser"
+					"name": "trimUser"
 				},
 				{
-					"name": "JoinBooksAndCopies"
+					"name": "joinBooksAndCopies"
 				},
 				{
-					"name": "JoinBookAndKeywords"
+					"name": "JoinBookAndBooksKeywords"
 				},
 				{
-					"name": "BooksAndKeywordsTrim"
+					"name": "trimBooksAndKeywords"
 				},
 				{
 					"name": "addCombinedColumnBookKeyword"
@@ -124,13 +124,34 @@
 					"name": "aggregateCountToFilterDuplicates"
 				},
 				{
-					"name": "BookKeywordsDropDuplicates"
+					"name": "dropDuplicatesBookKeywords"
 				},
 				{
-					"name": "JoinBooksAndLoans"
+					"name": "joinBooksAndLoans"
 				},
 				{
-					"name": "LoansTrim"
+					"name": "trimLoans"
+				},
+				{
+					"name": "surrogateKeyBook"
+				},
+				{
+					"name": "surrogateKeyLoan"
+				},
+				{
+					"name": "joinLoansOnUserKey"
+				},
+				{
+					"name": "surrogateKeyUser"
+				},
+				{
+					"name": "surrogateKeyKeyword"
+				},
+				{
+					"name": "JoinKeywordAndBooksKeywords"
+				},
+				{
+					"name": "surrogateKeyReview"
 				}
 			],
 			"scriptLines": [
@@ -207,63 +228,92 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> ReviewTable",
-				"BookTable select(mapColumn(",
-				"          id,",
-				"          writer",
+				"surrogateKeyBook select(mapColumn(",
+				"          book_key,",
+				"          book_id = id",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> TrimBook",
-				"KeywordTable select(mapColumn(",
-				"          id",
+				"     skipDuplicateMapOutputs: true) ~> trimBook",
+				"surrogateKeyKeyword select(mapColumn(",
+				"          keyword_key,",
+				"          keyword_id = id",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> TrimKeyword",
-				"CustomerTable select(mapColumn(",
-				"          id",
+				"     skipDuplicateMapOutputs: true) ~> trimKeyword",
+				"surrogateKeyUser select(mapColumn(",
+				"          user_key,",
+				"          user_id = id",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> TrimUser",
-				"BookTable, CopiesTable join(BookTable@id == book_id,",
+				"     skipDuplicateMapOutputs: true) ~> trimUser",
+				"surrogateKeyBook, CopiesTable join(BookTable@id == book_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> JoinBooksAndCopies",
-				"JoinBooksAndCopies, BookKeywordsTable join(CopiesTable@id == books_id,",
+				"     broadcast: 'auto')~> joinBooksAndCopies",
+				"surrogateKeyBook, BookKeywordsTable join(id == books_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> JoinBookAndKeywords",
-				"JoinBookAndKeywords select(mapColumn(",
-				"          book_id,",
-				"          keywords_id",
+				"     broadcast: 'auto')~> JoinBookAndBooksKeywords",
+				"JoinKeywordAndBooksKeywords select(mapColumn(",
+				"          book_key,",
+				"          keyword_key",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> BooksAndKeywordsTrim",
-				"BooksAndKeywordsTrim derive(book_keywords_id = concatWS('-', toString(book_id), toString(keywords_id))) ~> addCombinedColumnBookKeyword",
-				"addCombinedColumnBookKeyword aggregate(groupBy(book_id,",
-				"          keywords_id),",
+				"     skipDuplicateMapOutputs: true) ~> trimBooksAndKeywords",
+				"trimBooksAndKeywords derive(book_keywords_id = concatWS('-', toString(book_key), toString(keyword_key))) ~> addCombinedColumnBookKeyword",
+				"addCombinedColumnBookKeyword aggregate(groupBy(book_key,",
+				"          keyword_key),",
 				"     countCombined = count(book_keywords_id)) ~> aggregateCountToFilterDuplicates",
 				"aggregateCountToFilterDuplicates select(mapColumn(",
-				"          book_id,",
-				"          keywords_id",
+				"          book_key,",
+				"          keyword_key",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> BookKeywordsDropDuplicates",
-				"JoinBooksAndCopies, LoanTable join(CopiesTable@id == copy_id,",
+				"     skipDuplicateMapOutputs: true) ~> dropDuplicatesBookKeywords",
+				"joinBooksAndCopies, LoanTable join(CopiesTable@id == copy_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> JoinBooksAndLoans",
-				"JoinBooksAndLoans select(mapColumn(",
+				"     broadcast: 'auto')~> joinBooksAndLoans",
+				"joinLoansOnUserKey select(mapColumn(",
+				"          loan_key,",
 				"          loan_id = LoanTable@id,",
 				"          loan_date,",
 				"          return_date,",
-				"          book_id,",
-				"          employee_id",
+				"          copy_id,",
+				"          user_key,",
+				"          book_key",
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
-				"     skipDuplicateMapOutputs: true) ~> LoansTrim",
-				"TrimBook sink(allowSchemaDrift: true,",
+				"     skipDuplicateMapOutputs: true) ~> trimLoans",
+				"BookTable keyGenerate(output(book_key as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKeyBook",
+				"joinBooksAndLoans keyGenerate(output(loan_key as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKeyLoan",
+				"surrogateKeyLoan, trimUser join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinLoansOnUserKey",
+				"CustomerTable keyGenerate(output(user_key as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKeyUser",
+				"KeywordTable keyGenerate(output(keyword_key as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKeyKeyword",
+				"JoinBookAndBooksKeywords, trimKeyword join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> JoinKeywordAndBooksKeywords",
+				"ReviewTable keyGenerate(output(review_key as long),",
+				"     startAt: 1L,",
+				"     stepValue: 1L) ~> surrogateKeyReview",
+				"trimBook sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
@@ -271,7 +321,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> BookDIM",
-				"TrimKeyword sink(allowSchemaDrift: true,",
+				"trimKeyword sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
@@ -279,7 +329,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> KeywordDIM",
-				"TrimUser sink(allowSchemaDrift: true,",
+				"trimUser sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
@@ -287,7 +337,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> UserDIM",
-				"BookKeywordsDropDuplicates sink(allowSchemaDrift: true,",
+				"dropDuplicatesBookKeywords sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
@@ -295,7 +345,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> BookKeywordFACT",
-				"LoansTrim sink(allowSchemaDrift: true,",
+				"trimLoans sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",
@@ -303,7 +353,7 @@
 				"     postCommands: [],",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> LoanFACT",
-				"ReviewTable sink(allowSchemaDrift: true,",
+				"surrogateKeyReview sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     format: 'parquet',",
 				"     umask: 0022,",

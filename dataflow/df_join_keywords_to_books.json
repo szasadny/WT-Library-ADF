@@ -52,7 +52,7 @@
 					"name": "selectRelevantDataKeyword"
 				},
 				{
-					"name": "join1"
+					"name": "joinBooksAndKeywords"
 				}
 			],
 			"scriptLines": [
@@ -114,8 +114,8 @@
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
-				"     broadcast: 'auto')~> join1",
-				"join1 sink(allowSchemaDrift: true,",
+				"     broadcast: 'auto')~> joinBooksAndKeywords",
+				"joinBooksAndKeywords sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     input(",
 				"          keywords_id as long,",
